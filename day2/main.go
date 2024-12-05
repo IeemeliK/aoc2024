@@ -1,114 +1,48 @@
 package main
 
 import (
-	"bufio"
+	"aoc24_2/read_input"
+	"aoc24_2/validator"
 	"fmt"
-	"os"
-	"strconv"
-	"strings"
 )
 
-func readFile(fileName string) [][]int {
-	file, err := os.Open(fileName)
-	if err != nil {
-		panic(err)
+func validateByRemoving(list []int) bool {
+	for i := 0; i < len(list); i++ {
+		newList := append([]int{}, list[:i]...)
+		newList = append(newList, list[i+1:]...)
+
+		if validate(newList) {
+			return true
+		}
 	}
 
-	defer func() {
-		if err := file.Close(); err != nil {
-			panic(err)
-		}
-	}()
-
-	scanner := bufio.NewScanner(file)
-
-	list := make([][]int, 0)
-	for scanner.Scan() {
-		temp := make([]int, 0)
-		line := scanner.Text()
-		arr := strings.Split(line, " ")
-
-		if len(arr) == 0 || len(arr) == 1 {
-			continue
-		}
-
-		for _, v := range arr {
-			num, err := strconv.Atoi(strings.TrimSpace(v))
-			if err != nil {
-				panic(err)
-			}
-			temp = append(temp, num)
-		}
-		list = append(list, temp)
-	}
-
-	return list
+	return false
 }
 
-func absVal(num int) int {
-	if num < 0 {
-		return num * -1
+func validate(list []int) bool {
+	decr := validator.Decreasing(list)
+	incr := validator.Increasing(list)
+	maxDiff := validator.MaxDiff(list, 3)
+	minDiff := validator.MinDiff(list, 1)
+
+	if maxDiff && minDiff && (decr || incr) {
+		return true
 	}
-	return num
+
+	return false
 }
 
-func countSafeLevels(list [][]int) int {
+func countSafeLevels(list [][]int, remove bool) int {
 	safeCount := 0
 	for _, outer := range list {
-		safeValues := true
-		increasing := outer[1] > outer[0]
-		decreasing := outer[1] < outer[0]
-		removed := false
-
-		for i := 1; i <= len(outer)-1; i++ {
-			if increasing {
-				check := outer[i] > outer[i-1]
-
-				if !check && !removed {
-					check = outer[i+1] > outer[i-1]
-					removed = true
-				}
-				increasing = check
-			}
-
-			if decreasing {
-				check := outer[i] < outer[i-1]
-
-				if !check && !removed {
-					check = outer[i+1] < outer[i-1]
-					removed = true
-				}
-				decreasing = check
-			}
-
-			if safeValues {
-				num := absVal(outer[i] - outer[i-1])
-				check := num <= 3 && num >= 1
-
-				if !check && !removed {
-					num = absVal(outer[i+1] - outer[i-1])
-					check = num <= 3 && num >= 1
-					removed = true
-				}
-				safeValues = check
-			}
-
-			if (!increasing && !decreasing) || !safeValues {
-				break
-			}
-		}
-
-		if (increasing || decreasing) && safeValues {
+		if validate(outer) || (validateByRemoving(outer) && remove) {
 			safeCount++
 		}
-
-		fmt.Printf("list: %v, decreasing: %t, increasing: %t, safeValues: %t, removed: %t\n", outer, decreasing, increasing, safeValues, removed)
 	}
 	return safeCount
 }
 
 func main() {
-	list := readFile("input_test.txt")
-	fmt.Println(countSafeLevels(list))
-
+	list := readinput.ReadFile("input.txt")
+	fmt.Println(countSafeLevels(list, true))
 }
