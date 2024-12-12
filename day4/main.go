@@ -36,6 +36,17 @@ func checkHorizontal(list []string, xindex int, word string, direction int) bool
 	return true
 }
 
+func findXmas(list [][]string, yindex int, xindex int) bool {
+	word := "MAS"
+	reverse := "SAM"
+
+	if (checkDiagonal(list, yindex, xindex, word, 1, 1) || checkDiagonal(list, yindex, xindex, reverse, 1, 1)) &&
+		(checkDiagonal(list, yindex, xindex+2, word, -1, 1) || checkDiagonal(list, yindex, xindex+2, reverse, -1, 1)) {
+		return true
+	}
+	return false
+}
+
 func findWord(list [][]string, yindex int, xindex int, word string) int {
 	count := 0
 	// Checks backward
@@ -84,16 +95,21 @@ func main() {
 	list := readinput.ReadFile("input.txt")
 	fmt.Println(list)
 	word := "XMAS"
-	sum := 0
+	wordSum := 0
+	xmasSum := 0
 	for y, inner := range list {
 		fmt.Println(inner)
 		for x, letter := range inner {
-			if letter != string(word[0]) {
-				continue
+			if letter == string(word[0]) {
+				wordSum += findWord(list, y, x, word)
+			} else if letter == "M" || letter == "S" {
+				if findXmas(list, y, x) {
+					xmasSum++
+				}
 			}
-			sum += findWord(list, y, x, word)
 		}
 	}
 
-	fmt.Println(sum)
+	fmt.Println(wordSum)
+	fmt.Println("xmasSum:", xmasSum)
 }
